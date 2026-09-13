@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50 text-slate-800">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playwright Automation Sandbox - QA & Testing Hub</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    .dragging { opacity: 0.4; }
+    .drag-over { border-color: #3b82f6 !important; background-color: #eff6ff !important; }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased overflow-hidden">
+
+  <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-30 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-100">
+        🎭
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          Playwright Sandbox
+          <span class="px-2 py-0.5 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full">v2.0</span>
+        </h1>
+        <p class="text-xs text-slate-500 hidden sm:block">Automated End-to-End Testing Practice Ground</p>
+      </div>
+    </div>
+
+    <!-- Quick stats and status indicators -->
+    <div class="flex items-center gap-4">
+      <div id="authStatusIndicator" data-testid="global-auth-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600 border border-slate-200">
+        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+        <span id="authStatusText">Guest Mode</span>
+      </div>
+      <button 
+        id="resetAllBtn" 
+        data-testid="reset-state-button"
+        class="text-xs px-3 py-1.5 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors font-medium flex items-center gap-1.5"
+        title="Reset interactive states and storage">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Reset App</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Left Navigation Sidebar -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800">
+      <div class="p-3">
+        <p class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Testing Modules</p>
+      </div>
+      <nav id="sidebarNav" class="flex-1 px-3 space-y-1 overflow-y-auto">
+        <button data-tab="overview" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-indigo-600 text-white" data-testid="nav-overview">
+          <span class="text-base">📋</span> Overview & Locators
+        </button>
+        <button data-tab="auth" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-auth">
+          <span class="text-base">🔐</span> Authentication Flow
+        </button>
+        <button data-tab="forms" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-forms">
+          <span class="text-base">📝</span> Forms & Complex Inputs
+        </button>
+        <button data-tab="async" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-async">
+          <span class="text-base">⏳</span> Dynamic & Async Waits
+        </button>
+        <button data-tab="tables" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-tables">
+          <span class="text-base">📊</span> Data Tables & Filtering
+        </button>
+        <button data-tab="dialogs" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-dialogs">
+          <span class="text-base">💬</span> Modals, Toasts & Alerts
+        </button>
+        <button data-tab="actions" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-actions">
+          <span class="text-base">🖱️</span> Drag, Drop & Mouse Events
+        </button>
+        <button data-tab="advanced" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-advanced">
+          <span class="text-base">🧩</span> iFrame & Shadow DOM
+        </button>
+        <button data-tab="files" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-files">
+          <span class="text-base">📁</span> File Upload & Download
+        </button>
+        <button data-tab="network" class="tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white" data-testid="nav-network">
+          <span class="text-base">🌐</span> Network API & Mocking
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer tips -->
+      <div class="p-4 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400">
+        <p class="font-semibold text-slate-200 mb-1">Playwright Quick Tip:</p>
+        <code class="text-indigo-300 font-mono text-[11px] block bg-slate-900 p-1.5 rounded">page.getByTestId('id')</code>
+      </div>
+    </aside>
+
+    <!-- Main Content Work Area -->
+    <main class="flex-1 overflow-y-auto p-6 md:p-8">
+
+      <section id="tab-overview" class="module-tab space-y-6 max-w-5xl mx-auto">
+        <div class="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl p-8 text-white shadow-sm">
+          <h2 class="text-2xl font-bold mb-2">Welcome to your Playwright Practice Sandbox</h2>
+          <p class="text-indigo-200 text-sm max-w-2xl leading-relaxed mb-6">
+            This single-page application contains every real-world scenario you need to master automation with Playwright: complex inputs, dynamic waiting states, Shadow DOM, iFrames, drag-and-drop, custom modals, API mock endpoints, and token authentication.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="switchTab('auth')" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg text-sm font-semibold transition-colors shadow">
+              Start with Authentication →
+            </button>
+            <button onclick="switchTab('forms')" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition-colors">
+              Practice Form Locators
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-4 font-bold">1</div>
+            <h3 class="font-bold text-slate-900 mb-2">Deploy to GitHub Pages</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Push this single file as <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600">index.html</code> into a new GitHub repository. Under repo Settings &gt; Pages, select <span class="font-semibold text-slate-800">Deploy from Branch: main</span>.
+            </p>
+          </div>
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-4 font-bold">2</div>
+            <h3 class="font-bold text-slate-900 mb-2">User-Centric Locators</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Every element uses recommended Playwright attributes: <code class="text-indigo-600">getByRole</code>, <code class="text-indigo-600">getByLabel</code>, <code class="text-indigo-600">getByText</code>, and <code class="text-indigo-600">getByTestId</code>.
+            </p>
+          </div>
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-4 font-bold">3</div>
+            <h3 class="font-bold text-slate-900 mb-2">Zero Dependencies</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Pure client-side JavaScript, mock backend simulation with delay toggles, full keyboard & touch support, and zero build tool requirement.
+            </p>
+          </div>
+        </div>
+
+        <!-- Locator Cheat Sheet -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <span>🎯</span> Recommended Playwright Locator Matrix
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="p-3">Scenario</th>
+                  <th class="p-3">Playwright Locator</th>
+                  <th class="p-3">Target in this Sandbox</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-mono">
+                <tr>
+                  <td class="p-3 font-sans font-medium text-slate-900">Button Click</td>
+                  <td class="p-3 text-indigo-600">page.getByRole('button', { name: 'Submit Application' })</td>
+                  <td class="p-3 text-slate-500">Form Submission button</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-sans font-medium text-slate-900">Form Inputs</td>
+                  <td class="p-3 text-indigo-600">page.getByLabel('Email Address')</td>
+                  <td class="p-3 text-slate-500">Accessible form labels</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-sans font-medium text-slate-900">Custom Automation ID</td>
+                  <td class="p-3 text-indigo-600">page.getByTestId('auth-username-input')</td>
+                  <td class="p-3 text-slate-500">Data-testid attributes</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-sans font-medium text-slate-900">Shadow DOM</td>
+                  <td class="p-3 text-indigo-600">page.locator('playwright-counter-card button')</td>
+                  <td class="p-3 text-slate-500">Automatic Shadow DOM piercing</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-sans font-medium text-slate-900">iFrame Elements</td>
+                  <td class="p-3 text-indigo-600">page.frameLocator('#test-frame').getByRole(...)</td>
+                  <td class="p-3 text-slate-500">Nested test iframe</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-auth" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Authentication & Session State</h2>
+          <p class="text-xs text-slate-500">Test login credentials, validations, session cookies/tokens, and protected dashboards.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Login Form Card -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center justify-between">
+              <span>Sign In Test Bed</span>
+              <span class="text-[11px] font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded">User: testuser | Pass: secret123</span>
+            </h3>
+
+            <div id="authAlert" data-testid="auth-alert" class="hidden p-3 rounded-lg text-xs font-medium"></div>
+
+            <form id="loginForm" data-testid="login-form" class="space-y-4">
+              <div>
+                <label for="usernameInput" class="block text-xs font-semibold text-slate-700 mb-1">Username or Email</label>
+                <input 
+                  type="text" 
+                  id="usernameInput" 
+                  data-testid="auth-username-input" 
+                  placeholder="e.g. testuser"
+                  required
+                  class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+              </div>
+
+              <div>
+                <label for="passwordInput" class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                <input 
+                  type="password" 
+                  id="passwordInput" 
+                  data-testid="auth-password-input" 
+                  placeholder="••••••••"
+                  required
+                  class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+              </div>
+
+              <div class="flex items-center justify-between text-xs">
+                <label class="flex items-center gap-2 cursor-pointer text-slate-600 select-none">
+                  <input type="checkbox" id="rememberMeCheckbox" data-testid="auth-remember-checkbox" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
+                  <span>Remember session token</span>
+                </label>
+                <a href="#reset" onclick="demoForgotPass(); return false;" data-testid="auth-forgot-link" class="text-indigo-600 hover:underline">Forgot password?</a>
+              </div>
+
+              <button 
+                type="submit" 
+                id="loginSubmitBtn" 
+                data-testid="auth-submit-btn"
+                class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow transition-colors flex items-center justify-center gap-2">
+                <span id="loginBtnText">Log In</span>
+                <span id="loginSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Dashboard / Profile State -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-3">Protected User Dashboard</h3>
+              <div id="authEmptyState" class="text-center py-10">
+                <div class="text-4xl mb-2">🔒</div>
+                <p class="text-xs text-slate-500 font-medium">Please sign in to view secret profile data and session credentials.</p>
+              </div>
+
+              <div id="authDashboardState" data-testid="auth-dashboard" class="hidden space-y-4">
+                <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p class="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    Authentication Active
+                  </p>
+                  <p class="text-xs text-emerald-700 mt-1">Bearer Token successfully cached in storage.</p>
+                </div>
+
+                <div class="space-y-2 text-xs">
+                  <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">User Handle:</span>
+                    <span id="displayUserHandle" data-testid="user-handle" class="font-semibold text-slate-900">-</span>
+                  </div>
+                  <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">Role:</span>
+                    <span data-testid="user-role" class="font-semibold text-indigo-600">QA Automation Engineer</span>
+                  </div>
+                  <div class="flex justify-between border-b pb-1">
+                    <span class="text-slate-500">Bearer Token:</span>
+                    <span id="displayAuthToken" data-testid="user-token" class="font-mono text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              id="logoutBtn" 
+              data-testid="auth-logout-btn" 
+              class="hidden w-full mt-4 py-2 px-4 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-semibold transition-colors">
+              Log Out of Session
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-forms" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Forms & Complex Inputs</h2>
+            <p class="text-xs text-slate-500">Test fills, selects, sliders, date pickers, checkboxes, and form validation states.</p>
+          </div>
+        </div>
+
+        <form id="complexForm" data-testid="complex-form" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6" novalidate>
+          <div id="formSuccessBanner" data-testid="form-success-banner" class="hidden p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
+            Form successfully validated and submitted! Data snapshot generated below.
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Full Name -->
+            <div>
+              <label for="fullNameInput" class="block text-xs font-semibold text-slate-700 mb-1">
+                Full Name <span class="text-rose-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="fullNameInput" 
+                name="fullName"
+                data-testid="input-fullname" 
+                placeholder="Ada Lovelace" 
+                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <span id="nameError" data-testid="name-error-msg" class="hidden text-rose-500 text-[11px] mt-1 block">Full name must be at least 3 characters.</span>
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label for="formEmailInput" class="block text-xs font-semibold text-slate-700 mb-1">
+                Business Email <span class="text-rose-500">*</span>
+              </label>
+              <input 
+                type="email" 
+                id="formEmailInput" 
+                name="email"
+                data-testid="input-email" 
+                placeholder="ada@example.com" 
+                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <span id="emailError" data-testid="email-error-msg" class="hidden text-rose-500 text-[11px] mt-1 block">Please enter a valid email address.</span>
+            </div>
+
+            <!-- Select Dropdown -->
+            <div>
+              <label for="experienceLevelSelect" class="block text-xs font-semibold text-slate-700 mb-1">Experience Level</label>
+              <select 
+                id="experienceLevelSelect" 
+                name="experience"
+                data-testid="select-experience" 
+                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <option value="">-- Choose Experience --</option>
+                <option value="entry">Junior / Beginner (&lt; 1 yr)</option>
+                <option value="mid">Intermediate (1 - 3 yrs)</option>
+                <option value="senior">Senior Automation Lead (4+ yrs)</option>
+              </select>
+            </div>
+
+            <!-- Date Picker -->
+            <div>
+              <label for="preferredStartDate" class="block text-xs font-semibold text-slate-700 mb-1">Available Start Date</label>
+              <input 
+                type="date" 
+                id="preferredStartDate" 
+                name="startDate"
+                data-testid="input-startdate" 
+                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            </div>
+
+            <!-- Range Slider -->
+            <div class="col-span-1 md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div class="flex items-center justify-between mb-2">
+                <label for="sliderConfidence" class="text-xs font-semibold text-slate-700">Automation Confidence Level</label>
+                <span id="sliderValueDisplay" data-testid="slider-value" class="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">75%</span>
+              </div>
+              <input 
+                type="range" 
+                id="sliderConfidence" 
+                name="confidence"
+                min="0" 
+                max="100" 
+                value="75" 
+                data-testid="range-slider"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+            </div>
+
+            <!-- Radio Buttons -->
+            <div>
+              <span class="block text-xs font-semibold text-slate-700 mb-2">Target Test Runner</span>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <input type="radio" name="runner" value="chromium" data-testid="radio-chromium" checked class="text-indigo-600 focus:ring-indigo-500">
+                  <span>Chromium (Headless / Heaaded)</span>
+                </label>
+                <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <input type="radio" name="runner" value="firefox" data-testid="radio-firefox" class="text-indigo-600 focus:ring-indigo-500">
+                  <span>Firefox Engine</span>
+                </label>
+                <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <input type="radio" name="runner" value="webkit" data-testid="radio-webkit" class="text-indigo-600 focus:ring-indigo-500">
+                  <span>WebKit / Safari Engine</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Checkboxes -->
+            <div>
+              <span class="block text-xs font-semibold text-slate-700 mb-2">Testing Protocols to Run</span>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <input type="checkbox" name="protocols" value="visual" data-testid="check-visual" checked class="rounded text-indigo-600 focus:ring-indigo-500">
+                  <span>Visual Regression Testing</span>
+                </label>
+                <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <input type="checkbox" name="protocols" value="accessibility" data-testid="check-a11y" class="rounded text-indigo-600 focus:ring-indigo-500">
+                  <span>Axe Core Accessibility (a11y)</span>
+                </label>
+                <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                  <input type="checkbox" name="protocols" value="api" data-testid="check-api" class="rounded text-indigo-600 focus:ring-indigo-500">
+                  <span>API Contract Assertions</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Text Area -->
+            <div class="col-span-1 md:col-span-2">
+              <label for="notesTextarea" class="block text-xs font-semibold text-slate-700 mb-1">Test Execution Notes</label>
+              <textarea 
+                id="notesTextarea" 
+                name="notes"
+                rows="3" 
+                data-testid="textarea-notes" 
+                placeholder="Add special setup instructions or flags..."
+                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <button 
+              type="button" 
+              id="clearFormBtn" 
+              data-testid="btn-clear-form"
+              class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+              Clear All
+            </button>
+            <button 
+              type="submit" 
+              id="submitFormBtn" 
+              data-testid="btn-submit-form"
+              class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow transition-colors">
+              Submit Application
+            </button>
+          </div>
+
+          <!-- Submitted payload viewer for assertion -->
+          <div id="formPayloadOutput" data-testid="form-payload-output" class="hidden bg-slate-900 text-slate-300 p-4 rounded-lg font-mono text-xs overflow-x-auto">
+            <pre id="formPayloadJson">{}</pre>
+          </div>
+        </form>
+      </section>
+
+      <section id="tab-async" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Dynamic & Async Waiting Scenarios</h2>
+          <p class="text-xs text-slate-500">Master <code class="font-mono text-indigo-600">waitForSelector</code>, <code class="font-mono text-indigo-600">expect(locator).toBeVisible()</code>, dynamic delayed rendering, and pollers.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Delayed Element Appearance -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 text-sm">Delayed Element Generator</h3>
+            <p class="text-xs text-slate-500">Click the button to simulate a 3-second backend delay before rendering the reward badge.</p>
+            
+            <button 
+              id="triggerDelayedElementBtn" 
+              data-testid="trigger-delayed-btn" 
+              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition-colors flex items-center gap-2">
+              <span id="delayBtnText">Trigger 3-Second Async Action</span>
+              <span id="delaySpinner" class="hidden w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            </button>
+
+            <!-- Container that populates after delay -->
+            <div id="delayedElementContainer" class="min-h-[90px] flex items-center justify-center p-4 border-2 border-dashed border-slate-200 rounded-lg">
+              <span id="delayedPlaceholder" class="text-xs text-slate-400">Waiting for trigger click...</span>
+              <div 
+                id="delayedSecretCard" 
+                data-testid="delayed-secret-card" 
+                class="hidden w-full p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-900 animate-fade-in flex items-center justify-between">
+                <div>
+                  <p class="font-bold">🎉 Delayed Content Loaded!</p>
+                  <p class="text-[11px] text-indigo-700 font-mono">Assertion token: #PLAYWRIGHT-PASS-99</p>
+                </div>
+                <span class="px-2 py-1 bg-indigo-600 text-white text-[10px] font-bold rounded">SUCCESS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progressive Loading Bar -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 text-sm">Progressive State Poller</h3>
+            <p class="text-xs text-slate-500">Simulate background jobs updating progress percentages until 100%.</p>
+
+            <button 
+              id="startProgressBtn" 
+              data-testid="start-progress-btn" 
+              class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow transition-colors">
+              Start Background Job
+            </button>
+
+            <div>
+              <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                <span>Job Progress</span>
+                <span id="progressPercentDisplay" data-testid="progress-text">0%</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                <div id="progressBarFill" data-testid="progress-bar-fill" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-200" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div id="progressCompletedAlert" data-testid="progress-completed-alert" class="hidden p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs font-semibold">
+              ✅ Background Job Completed at 100%
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-tables" class="module-tab hidden space-y-6 max-w-5xl mx-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Interactive Data Table</h2>
+            <p class="text-xs text-slate-500">Practice row filtering, cell assertions, sort clicks, and pagination controls.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input 
+              type="text" 
+              id="tableSearchInput" 
+              data-testid="table-search-input"
+              placeholder="Search table by name, role, status..."
+              class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64 bg-white">
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs" data-testid="users-table">
+              <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 select-none">
+                <tr>
+                  <th class="p-3">
+                    <input type="checkbox" id="selectAllRows" data-testid="select-all-rows" class="rounded text-indigo-600">
+                  </th>
+                  <th class="p-3 cursor-pointer hover:text-indigo-600" id="sortName" data-testid="sort-name">
+                    Employee Name ↕
+                  </th>
+                  <th class="p-3">Role</th>
+                  <th class="p-3 cursor-pointer hover:text-indigo-600" id="sortScore" data-testid="sort-score">
+                    Test Score ↕
+                  </th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody" data-testid="table-body" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table footer pagination -->
+          <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
+            <span class="text-slate-500" id="tablePaginationInfo" data-testid="pagination-info">Showing 1 to 5 of 8 entries</span>
+            <div class="flex items-center gap-1">
+              <button id="prevPageBtn" data-testid="prev-page-btn" class="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Previous</button>
+              <button id="nextPageBtn" data-testid="next-page-btn" class="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-dialogs" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Modals, Dialogs & Toast Notifications</h2>
+          <p class="text-xs text-slate-500">Practice custom dialogs, confirm action prompts, and auto-dismissing toast alerts.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Open Standard Modal -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Standard Modal</h3>
+              <p class="text-xs text-slate-500">Opens an accessible overlay dialog with focus management and close actions.</p>
+            </div>
+            <button 
+              id="openModalBtn" 
+              data-testid="open-modal-btn"
+              class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors">
+              Open Modal Dialog
+            </button>
+          </div>
+
+          <!-- Confirm Action Dialog -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Destructive Confirm</h3>
+              <p class="text-xs text-slate-500">Simulates asking for user confirmation before executing a critical change.</p>
+            </div>
+            <button 
+              id="openConfirmBtn" 
+              data-testid="open-confirm-btn"
+              class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold transition-colors">
+              Delete Project Confirm
+            </button>
+          </div>
+
+          <!-- Toast Trigger -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Toast Banners</h3>
+              <p class="text-xs text-slate-500">Spawns a self-dismissing toast notification alert with locator id.</p>
+            </div>
+            <button 
+              id="triggerToastBtn" 
+              data-testid="trigger-toast-btn"
+              class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold transition-colors">
+              Spawn Notification
+            </button>
+          </div>
+        </div>
+
+        <!-- Result feedback label -->
+        <div class="p-4 bg-white rounded-xl border border-slate-200 text-xs flex items-center justify-between">
+          <span class="text-slate-500">Last Dialog Action Recorded:</span>
+          <span id="dialogFeedback" data-testid="dialog-feedback-msg" class="font-mono font-semibold text-slate-800">None yet</span>
+        </div>
+      </section>
+
+      <section id="tab-actions" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Drag & Drop & Advanced Mouse Interactions</h2>
+          <p class="text-xs text-slate-500">Practice HTML5 Drag and Drop (<code class="font-mono text-indigo-600">locator.dragTo()</code>), right click context menus, and hover tooltips.</p>
+        </div>
+
+        <!-- Kanban Drag & Drop -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="text-sm font-bold text-slate-900">Kanban Board Drag & Drop</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Source Column -->
+            <div 
+              id="dragSourceCol" 
+              data-testid="drag-source-col"
+              class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4 min-h-[220px] flex flex-col gap-2 transition-colors">
+              <span class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Backlog Items</span>
+              <div 
+                id="dragCard1" 
+                data-testid="drag-card-1"
+                draggable="true" 
+                class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm text-xs font-medium text-slate-800 cursor-grab active:cursor-grabbing flex items-center justify-between">
+                <span>Task 101: Write Playwright E2E</span>
+                <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono">#E2E</span>
+              </div>
+              <div 
+                id="dragCard2" 
+                data-testid="drag-card-2"
+                draggable="true" 
+                class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm text-xs font-medium text-slate-800 cursor-grab active:cursor-grabbing flex items-center justify-between">
+                <span>Task 102: Validate API Response</span>
+                <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-mono">#API</span>
+              </div>
+            </div>
+
+            <!-- Target Column -->
+            <div 
+              id="dragTargetCol" 
+              data-testid="drag-target-col"
+              class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4 min-h-[220px] flex flex-col gap-2 transition-colors">
+              <span class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Completed / Done</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mouse Special Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Right Click Box -->
+          <div 
+            id="rightClickZone" 
+            data-testid="right-click-zone"
+            class="bg-white border-2 border-dashed border-slate-300 p-8 rounded-xl text-center cursor-context-menu select-none hover:border-slate-400 transition-colors">
+            <span class="text-2xl block mb-1">🖱️</span>
+            <span class="text-xs font-bold text-slate-800 block">Right Click Zone</span>
+            <span class="text-[11px] text-slate-500">Test <code class="font-mono text-indigo-600">click({ button: 'right' })</code></span>
+            <div id="rightClickMsg" data-testid="right-click-result" class="mt-3 hidden text-xs font-bold text-indigo-600 bg-indigo-50 py-1.5 px-3 rounded-lg">
+              Right click detected!
+            </div>
+          </div>
+
+          <!-- Double Click Box -->
+          <div 
+            id="doubleClickZone" 
+            data-testid="double-click-zone"
+            class="bg-white border-2 border-dashed border-slate-300 p-8 rounded-xl text-center cursor-pointer select-none hover:border-slate-400 transition-colors">
+            <span class="text-2xl block mb-1">⚡</span>
+            <span class="text-xs font-bold text-slate-800 block">Double Click Zone</span>
+            <span class="text-[11px] text-slate-500">Test <code class="font-mono text-indigo-600">dblclick()</code></span>
+            <div id="doubleClickMsg" data-testid="double-click-result" class="mt-3 hidden text-xs font-bold text-emerald-600 bg-emerald-50 py-1.5 px-3 rounded-lg">
+              Double click detected!
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-advanced" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">iFrames & Web Components (Shadow DOM)</h2>
+          <p class="text-xs text-slate-500">Playwright seamlessly pierces Shadow DOM boundaries and handles nested iframes with <code class="font-mono text-indigo-600">frameLocator()</code>.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- iFrame Scenario -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 text-sm">Nested iFrame Sandbox</h3>
+            <p class="text-xs text-slate-500">Target items inside an actual embedded iframe document.</p>
+            <iframe 
+              id="testIframe" 
+              data-testid="test-iframe"
+              class="w-full h-44 rounded-lg border border-slate-300 bg-white"
+              srcdoc="
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <style>
+                    body { font-family: sans-serif; padding: 16px; background: #f8fafc; margin: 0; color: #1e293b; }
+                    button { background: #4f46e5; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+                    button:hover { background: #4338ca; }
+                    .tag { font-size: 11px; margin-top: 8px; color: #059669; font-weight: bold; }
+                  </style>
+                </head>
+                <body>
+                  <p style='font-size:12px; margin-bottom:12px;'>Hello from inside the sandboxed iFrame!</p>
+                  <button id='iframeActionBtn' data-testid='iframe-button' onclick='document.getElementById(&quot;iframeStatus&quot;).innerText = &quot;Status: Clicked Successfully inside iFrame!&quot;'>Click Inside iFrame</button>
+                  <p id='iframeStatus' data-testid='iframe-status' class='tag'>Status: Unclicked</p>
+                </body>
+                </html>
+              ">
+            </iframe>
+          </div>
+
+          <!-- Shadow DOM Custom Web Component -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 text-sm">Web Component with Shadow DOM</h3>
+            <p class="text-xs text-slate-500">Playwright locators pierce open Shadow DOMs natively without special syntax.</p>
+            
+            <!-- Custom Web Component Defined in JS -->
+            <playwright-shadow-box data-testid="shadow-host"></playwright-shadow-box>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-files" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">File Upload & Download Simulation</h2>
+          <p class="text-xs text-slate-500">Practice <code class="font-mono text-indigo-600">setInputFiles()</code> and <code class="font-mono text-indigo-600">waitForEvent('download')</code>.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Upload Test -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 text-sm">File Upload Control</h3>
+            <p class="text-xs text-slate-500">Upload a test file (.txt, .json, .csv) and verify its metadata.</p>
+
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-indigo-500 transition-colors">
+              <input 
+                type="file" 
+                id="fileUploadInput" 
+                data-testid="file-upload-input"
+                class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+            </div>
+
+            <div id="fileUploadResult" data-testid="file-upload-result" class="hidden p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
+              <p class="font-semibold text-slate-800">Uploaded File Details:</p>
+              <p class="text-slate-600">Name: <span id="uploadedFileName" data-testid="file-name" class="font-mono font-bold">-</span></p>
+              <p class="text-slate-600">Size: <span id="uploadedFileSize" data-testid="file-size" class="font-mono">-</span></p>
+            </div>
+          </div>
+
+          <!-- Download Test -->
+          <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-2">Simulated File Download</h3>
+              <p class="text-xs text-slate-500 mb-4">Clicking triggers an in-browser Blob download of a generated JSON test report.</p>
+              <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-xs text-indigo-800">
+                <span class="font-bold">Playwright Syntax:</span>
+                <code class="block font-mono text-[11px] mt-1">const [ download ] = await Promise.all([<br>&nbsp;&nbsp;page.waitForEvent('download'),<br>&nbsp;&nbsp;page.getByTestId('download-report-btn').click()<br>]);</code>
+              </div>
+            </div>
+
+            <button 
+              id="downloadReportBtn" 
+              data-testid="download-report-btn"
+              class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow transition-colors flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Download Automation Report (JSON)</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-network" class="module-tab hidden space-y-6 max-w-4xl mx-auto">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Network Interception & API Route Mocking</h2>
+          <p class="text-xs text-slate-500">Practice intercepting browser requests using <code class="font-mono text-indigo-600">page.route('**/api/users', route =&gt; ...)</code>.</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm">Fetch Real or Mock API Data</h3>
+              <p class="text-xs text-slate-500">Dispatches an HTTP GET fetch to <code class="font-mono text-indigo-600">/api/v1/automation-status</code>.</p>
+            </div>
+            <button 
+              id="fetchApiBtn" 
+              data-testid="fetch-api-btn"
+              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition-colors flex items-center gap-2">
+              <span id="fetchBtnText">Execute API Call</span>
+              <span id="fetchSpinner" class="hidden w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            </button>
+          </div>
+
+          <div class="p-4 bg-slate-900 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto min-h-[120px] flex items-center justify-center">
+            <span id="apiPlaceholder" class="text-slate-500">No request fired yet. Click "Execute API Call" or intercept with Playwright route!</span>
+            <pre id="apiOutput" data-testid="api-output" class="hidden w-full text-left"></pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Standard Modal Overlay -->
+  <div id="standardModal" data-testid="standard-modal-overlay" class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200 p-6 space-y-4 transform transition-all" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="flex items-center justify-between">
+        <h3 id="modalTitle" data-testid="modal-title" class="font-bold text-slate-900 text-base">Test Configuration Modal</h3>
+        <button id="closeModalCross" data-testid="close-modal-cross" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        This is an accessible modal popup designed for automation testing. You can test opening, reading headings, closing via the cross, ESC key, or the confirmation button.
+      </p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="cancelModalBtn" data-testid="cancel-modal-btn" class="px-4 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button id="confirmModalBtn" data-testid="confirm-modal-btn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700">Confirm & Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Dialog Overlay -->
+  <div id="confirmModal" data-testid="confirm-modal-overlay" class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl border border-slate-200 p-6 space-y-4" role="alertdialog">
+      <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-lg">⚠️</div>
+      <div>
+        <h3 class="font-bold text-slate-900 text-base" data-testid="confirm-title">Are you absolutely sure?</h3>
+        <p class="text-xs text-slate-500 mt-1">This action cannot be undone. This will permanently delete test repository "playwright-e2e".</p>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="cancelConfirmBtn" data-testid="confirm-cancel-btn" class="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button id="acceptConfirmBtn" data-testid="confirm-accept-btn" class="px-3 py-2 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" data-testid="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    /* Custom Web Component with Shadow DOM */
+    class PlaywrightShadowBox extends HTMLElement {
+      constructor() {
+        super();
+        const shadow = this.attachShadow({ mode: 'open' });
+        
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('style', `
+          background: #f8fafc;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 16px;
+          font-family: inherit;
+        `);
+
+        wrapper.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+            <strong style="font-size: 13px; color: #1e293b;">Shadow DOM Counter</strong>
+            <span style="font-size: 10px; background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-family: monospace;">shadow-root (open)</span>
+          </div>
+          <p style="font-size: 11px; color: #64748b; margin: 0 0 12px 0;">Playwright auto-pierces this shadow boundary using normal locators.</p>
+          <div style="display:flex; align-items:center; gap: 12px;">
+            <button id="shadowDecBtn" data-testid="shadow-dec-btn" style="padding: 6px 12px; background: #e2e8f0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">-</button>
+            <span id="shadowCountVal" data-testid="shadow-count-val" style="font-size: 16px; font-weight: bold; color: #4338ca; min-width: 24px; text-align: center;">0</span>
+            <button id="shadowIncBtn" data-testid="shadow-inc-btn" style="padding: 6px 12px; background: #4f46e5; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">+</button>
+          </div>
+        `;
+
+        let count = 0;
+        const valEl = wrapper.querySelector('#shadowCountVal');
+        wrapper.querySelector('#shadowIncBtn').addEventListener('click', () => {
+          count++;
+          valEl.textContent = count;
+        });
+        wrapper.querySelector('#shadowDecBtn').addEventListener('click', () => {
+          count--;
+          valEl.textContent = count;
+        });
+
+        shadow.appendChild(wrapper);
+      }
+    }
+    customElements.define('playwright-shadow-box', PlaywrightShadowBox);
+
+    // Initial Table Mock Data
+    const mockUsers = [
+      { id: 1, name: 'Alice Walker', role: 'SDET Lead', score: 98, status: 'Active' },
+      { id: 2, name: 'Bob Vance', role: 'QA Automation', score: 84, status: 'Active' },
+      { id: 3, name: 'Charlie Day', role: 'Manual QA', score: 62, status: 'Pending' },
+      { id: 4, name: 'Dana Scully', role: 'Security Tester', score: 95, status: 'Active' },
+      { id: 5, name: 'Edward Norton', role: 'SDET II', score: 89, status: 'Inactive' },
+      { id: 6, name: 'Fiona Gallagher', role: 'Junior Tester', score: 71, status: 'Pending' },
+      { id: 7, name: 'George Clark', role: 'DevOps / QA', score: 88, status: 'Active' },
+      { id: 8, name: 'Hannah Abbott', role: 'Test Architect', score: 99, status: 'Active' },
+    ];
+
+    let currentTableData = [...mockUsers];
+    let sortDirection = { name: 1, score: 1 };
+
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const moduleTabs = document.querySelectorAll('.module-tab');
+
+    function switchTab(tabId) {
+      moduleTabs.forEach(tab => tab.classList.add('hidden'));
+      tabButtons.forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
+      });
+
+      const activeSection = document.getElementById(`tab-${tabId}`);
+      if (activeSection) {
+        activeSection.classList.remove('hidden');
+      }
+
+      const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-indigo-600', 'text-white');
+        activeBtn.classList.remove('text-slate-400', 'hover:bg-slate-800', 'hover:text-white');
+      }
+    }
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    const loginForm = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const authAlert = document.getElementById('authAlert');
+    const loginBtnText = document.getElementById('loginBtnText');
+    const loginSpinner = document.getElementById('loginSpinner');
+    const authEmptyState = document.getElementById('authEmptyState');
+    const authDashboardState = document.getElementById('authDashboardState');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const authStatusIndicator = document.getElementById('authStatusIndicator');
+    const authStatusText = document.getElementById('authStatusText');
+    const displayUserHandle = document.getElementById('displayUserHandle');
+    const displayAuthToken = document.getElementById('displayAuthToken');
+
+    function updateAuthUI(isLoggedIn, username = '') {
+      if (isLoggedIn) {
+        authEmptyState.classList.add('hidden');
+        authDashboardState.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden');
+        authStatusIndicator.className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-xs font-medium text-emerald-700 border border-emerald-200";
+        authStatusIndicator.querySelector('span').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+        authStatusText.textContent = `Logged in as @${username}`;
+        displayUserHandle.textContent = `@${username}`;
+        displayAuthToken.textContent = `pw_tok_${btoa(username)}_${Date.now().toString(36)}`;
+      } else {
+        authEmptyState.classList.remove('hidden');
+        authDashboardState.classList.add('hidden');
+        logoutBtn.classList.add('hidden');
+        authStatusIndicator.className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600 border border-slate-200";
+        authStatusIndicator.querySelector('span').className = "w-2 h-2 rounded-full bg-slate-400";
+        authStatusText.textContent = "Guest Mode";
+        displayUserHandle.textContent = "-";
+        displayAuthToken.textContent = "-";
+      }
+    }
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const user = usernameInput.value.trim();
+      const pass = passwordInput.value.trim();
+
+      loginBtnText.textContent = "Verifying...";
+      loginSpinner.classList.remove('hidden');
+      authAlert.classList.add('hidden');
+
+      setTimeout(() => {
+        loginBtnText.textContent = "Log In";
+        loginSpinner.classList.add('hidden');
+
+        if (user === 'testuser' && pass === 'secret123') {
+          authAlert.className = "p-3 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
+          authAlert.textContent = "Success! Authentication token granted.";
+          authAlert.classList.remove('hidden');
+          updateAuthUI(true, user);
+        } else {
+          authAlert.className = "p-3 rounded-lg text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200";
+          authAlert.textContent = "Invalid credentials! Use testuser / secret123.";
+          authAlert.classList.remove('hidden');
+          updateAuthUI(false);
+        }
+      }, 600);
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      updateAuthUI(false);
+      usernameInput.value = '';
+      passwordInput.value = '';
+      authAlert.classList.add('hidden');
+      showToast('Session terminated successfully.', 'info');
+    });
+
+    function demoForgotPass() {
+      showToast('Password reset link sent to registered email.', 'info');
+    }
+
+    const complexForm = document.getElementById('complexForm');
+    const sliderConfidence = document.getElementById('sliderConfidence');
+    const sliderValueDisplay = document.getElementById('sliderValueDisplay');
+    const clearFormBtn = document.getElementById('clearFormBtn');
+
+    sliderConfidence.addEventListener('input', (e) => {
+      sliderValueDisplay.textContent = `${e.target.value}%`;
+    });
+
+    clearFormBtn.addEventListener('click', () => {
+      complexForm.reset();
+      sliderValueDisplay.textContent = '75%';
+      document.getElementById('formPayloadOutput').classList.add('hidden');
+      document.getElementById('formSuccessBanner').classList.add('hidden');
+      document.getElementById('nameError').classList.add('hidden');
+      document.getElementById('emailError').classList.add('hidden');
+    });
+
+    complexForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('fullNameInput');
+      const emailInput = document.getElementById('formEmailInput');
+      const nameError = document.getElementById('nameError');
+      const emailError = document.getElementById('emailError');
+      const banner = document.getElementById('formSuccessBanner');
+      const payloadBox = document.getElementById('formPayloadOutput');
+      const payloadJson = document.getElementById('formPayloadJson');
+
+      let isValid = true;
+      if (nameInput.value.trim().length < 3) {
+        nameError.classList.remove('hidden');
+        isValid = false;
+      } else {
+        nameError.classList.add('hidden');
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailInput.value.trim())) {
+        emailError.classList.remove('hidden');
+        isValid = false;
+      } else {
+        emailError.classList.add('hidden');
+      }
+
+      if (!isValid) return;
+
+      const formData = new FormData(complexForm);
+      const selectedProtocols = formData.getAll('protocols');
+      const resultObj = {
+        fullName: formData.get('fullName'),
+        email: formData.get('email'),
+        experience: formData.get('experience'),
+        startDate: formData.get('startDate'),
+        confidence: formData.get('confidence'),
+        runner: formData.get('runner'),
+        protocols: selectedProtocols,
+        notes: formData.get('notes'),
+        timestamp: new Date().toISOString()
+      };
+
+      banner.classList.remove('hidden');
+      payloadBox.classList.remove('hidden');
+      payloadJson.textContent = JSON.stringify(resultObj, null, 2);
+    });
+
+    const triggerDelayedBtn = document.getElementById('triggerDelayedElementBtn');
+    const delaySpinner = document.getElementById('delaySpinner');
+    const delayBtnText = document.getElementById('delayBtnText');
+    const delayedPlaceholder = document.getElementById('delayedPlaceholder');
+    const delayedSecretCard = document.getElementById('delayedSecretCard');
+
+    triggerDelayedBtn.addEventListener('click', () => {
+      delayBtnText.textContent = "Fetching over async network...";
+      delaySpinner.classList.remove('hidden');
+      triggerDelayedBtn.disabled = true;
+
+      setTimeout(() => {
+        delayBtnText.textContent = "Trigger 3-Second Async Action";
+        delaySpinner.classList.add('hidden');
+        triggerDelayedBtn.disabled = false;
+        delayedPlaceholder.classList.add('hidden');
+        delayedSecretCard.classList.remove('hidden');
+      }, 3000);
+    });
+
+    const startProgressBtn = document.getElementById('startProgressBtn');
+    const progressPercentDisplay = document.getElementById('progressPercentDisplay');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const progressCompletedAlert = document.getElementById('progressCompletedAlert');
+
+    startProgressBtn.addEventListener('click', () => {
+      let progress = 0;
+      startProgressBtn.disabled = true;
+      progressCompletedAlert.classList.add('hidden');
+
+      const interval = setInterval(() => {
+        progress += 20;
+        progressBarFill.style.width = `${progress}%`;
+        progressPercentDisplay.textContent = `${progress}%`;
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          startProgressBtn.disabled = false;
+          progressCompletedAlert.classList.remove('hidden');
+        }
+      }, 400);
+    });
+
+    const tableBody = document.getElementById('tableBody');
+    const tableSearchInput = document.getElementById('tableSearchInput');
+    const sortNameBtn = document.getElementById('sortName');
+    const sortScoreBtn = document.getElementById('sortScore');
+
+    function renderTable(data) {
+      tableBody.innerHTML = '';
+      if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No matching records found.</td></tr>`;
+        return;
+      }
+
+      data.forEach(user => {
+        const row = document.createElement('tr');
+        row.setAttribute('data-testid', `table-row-${user.id}`);
+        row.className = "hover:bg-slate-50 transition-colors";
+
+        const badgeBg = user.status === 'Active' 
+          ? 'bg-emerald-50 text-emerald-700' 
+          : user.status === 'Pending' 
+            ? 'bg-amber-50 text-amber-700' 
+            : 'bg-slate-100 text-slate-600';
+
+        row.innerHTML = `
+          <td class="p-3">
+            <input type="checkbox" data-testid="row-check-${user.id}" class="row-checkbox rounded text-indigo-600">
+          </td>
+          <td class="p-3 font-semibold text-slate-900" data-testid="cell-name-${user.id}">${user.name}</td>
+          <td class="p-3 text-slate-600" data-testid="cell-role-${user.id}">${user.role}</td>
+          <td class="p-3 font-mono font-medium" data-testid="cell-score-${user.id}">${user.score} / 100</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeBg}" data-testid="cell-status-${user.id}">${user.status}</span>
+          </td>
+          <td class="p-3 text-right">
+            <button onclick="deleteRow(${user.id})" data-testid="delete-row-${user.id}" class="text-rose-500 hover:text-rose-700 font-semibold text-[11px]">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function deleteRow(id) {
+      currentTableData = currentTableData.filter(u => u.id !== id);
+      renderTable(currentTableData);
+      showToast(`User ID #${id} deleted from grid`, 'info');
+    }
+
+    tableSearchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = currentTableData.filter(u => 
+        u.name.toLowerCase().includes(q) || 
+        u.role.toLowerCase().includes(q) || 
+        u.status.toLowerCase().includes(q)
+      );
+      renderTable(filtered);
+    });
+
+    sortNameBtn.addEventListener('click', () => {
+      sortDirection.name = -sortDirection.name;
+      currentTableData.sort((a, b) => a.name.localeCompare(b.name) * sortDirection.name);
+      renderTable(currentTableData);
+    });
+
+    sortScoreBtn.addEventListener('click', () => {
+      sortDirection.score = -sortDirection.score;
+      currentTableData.sort((a, b) => (a.score - b.score) * sortDirection.score);
+      renderTable(currentTableData);
+    });
+
+    document.getElementById('selectAllRows').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = checked);
+    });
+
+    renderTable(currentTableData);
+
+    const standardModal = document.getElementById('standardModal');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalCross = document.getElementById('closeModalCross');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const confirmModalBtn = document.getElementById('confirmModalBtn');
+
+    const confirmModal = document.getElementById('confirmModal');
+    const openConfirmBtn = document.getElementById('openConfirmBtn');
+    const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+    const acceptConfirmBtn = document.getElementById('acceptConfirmBtn');
+    const dialogFeedback = document.getElementById('dialogFeedback');
+
+    openModalBtn.addEventListener('click', () => standardModal.classList.remove('hidden'));
+    closeModalCross.addEventListener('click', () => {
+      standardModal.classList.add('hidden');
+      dialogFeedback.textContent = "Standard Modal dismissed via [X]";
+    });
+    cancelModalBtn.addEventListener('click', () => {
+      standardModal.classList.add('hidden');
+      dialogFeedback.textContent = "Standard Modal cancelled";
+    });
+    confirmModalBtn.addEventListener('click', () => {
+      standardModal.classList.add('hidden');
+      dialogFeedback.textContent = "Standard Modal confirmed successfully!";
+      showToast("Config settings confirmed!", "success");
+    });
+
+    openConfirmBtn.addEventListener('click', () => confirmModal.classList.remove('hidden'));
+    cancelConfirmBtn.addEventListener('click', () => {
+      confirmModal.classList.add('hidden');
+      dialogFeedback.textContent = "Delete prompt rejected";
+    });
+    acceptConfirmBtn.addEventListener('click', () => {
+      confirmModal.classList.add('hidden');
+      dialogFeedback.textContent = "Project playwright-e2e was permanently deleted!";
+      showToast("Repository destroyed.", "danger");
+    });
+
+    // Toast Notification Creator
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.setAttribute('data-testid', 'toast-item');
+      
+      const colors = {
+        info: 'bg-slate-900 text-white',
+        success: 'bg-emerald-600 text-white',
+        danger: 'bg-rose-600 text-white'
+      };
+
+      toast.className = `${colors[type]} px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium pointer-events-auto flex items-center gap-2 transform transition-all duration-300 opacity-0 translate-y-2`;
+      toast.innerHTML = `<span>💬</span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    document.getElementById('triggerToastBtn').addEventListener('click', () => {
+      showToast('Automation worker completed test batch #404', 'success');
+    });
+
+    const dragSourceCol = document.getElementById('dragSourceCol');
+    const dragTargetCol = document.getElementById('dragTargetCol');
+    const dragCards = [document.getElementById('dragCard1'), document.getElementById('dragCard2')];
+
+    dragCards.forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', card.id);
+        card.classList.add('dragging');
+      });
+      card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    });
+
+    [dragSourceCol, dragTargetCol].forEach(zone => {
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('drag-over');
+      });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const cardId = e.dataTransfer.getData('text/plain');
+        const card = document.getElementById(cardId);
+        if (card) zone.appendChild(card);
+      });
+    });
+
+    // Right Click & Double Click Zones
+    const rightClickZone = document.getElementById('rightClickZone');
+    const rightClickMsg = document.getElementById('rightClickMsg');
+    rightClickZone.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      rightClickMsg.classList.remove('hidden');
+    });
+
+    const doubleClickZone = document.getElementById('doubleClickZone');
+    const doubleClickMsg = document.getElementById('doubleClickMsg');
+    doubleClickZone.addEventListener('dblclick', () => {
+      doubleClickMsg.classList.remove('hidden');
+    });
+
+    const fileUploadInput = document.getElementById('fileUploadInput');
+    const fileUploadResult = document.getElementById('fileUploadResult');
+    const uploadedFileName = document.getElementById('uploadedFileName');
+    const uploadedFileSize = document.getElementById('uploadedFileSize');
+
+    fileUploadInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        fileUploadResult.classList.remove('hidden');
+        uploadedFileName.textContent = file.name;
+        uploadedFileSize.textContent = `${(file.size / 1024).toFixed(1)} KB (${file.type || 'plain'})`;
+      }
+    });
+
+    // Trigger File Download
+    document.getElementById('downloadReportBtn').addEventListener('click', () => {
+      const dummyReport = {
+        testSuite: 'Playwright E2E Regression',
+        passed: 42,
+        failed: 0,
+        generatedAt: new Date().toISOString(),
+        framework: 'playwright/test'
+      };
+      const blob = new Blob([JSON.stringify(dummyReport, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'playwright-test-report.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    const fetchApiBtn = document.getElementById('fetchApiBtn');
+    const fetchBtnText = document.getElementById('fetchBtnText');
+    const fetchSpinner = document.getElementById('fetchSpinner');
+    const apiPlaceholder = document.getElementById('apiPlaceholder');
+    const apiOutput = document.getElementById('apiOutput');
+
+    fetchApiBtn.addEventListener('click', async () => {
+      fetchBtnText.textContent = "Calling API...";
+      fetchSpinner.classList.remove('hidden');
+
+      try {
+        // Dispatch real fetch call so Playwright page.route() can intercept it!
+        const response = await fetch('/api/v1/automation-status', {
+          headers: { 'Accept': 'application/json' }
+        }).catch(() => null);
+
+        let data;
+        if (response && response.ok) {
+          data = await response.json();
+        } else {
+          // Default mock response when not running behind an intercepted route
+          data = {
+            status: 200,
+            endpoint: '/api/v1/automation-status',
+            mockedByPlaywright: false,
+            message: 'Default sandbox response. Intercept with page.route() in Playwright to mock custom payloads!',
+            timestamp: new Date().toISOString()
+          };
+        }
+
+        apiPlaceholder.classList.add('hidden');
+        apiOutput.classList.remove('hidden');
+        apiOutput.textContent = JSON.stringify(data, null, 2);
+      } finally {
+        fetchBtnText.textContent = "Execute API Call";
+        fetchSpinner.classList.add('hidden');
+      }
+    });
+
+    // Global Reset Button
+    document.getElementById('resetAllBtn').addEventListener('click', () => {
+      updateAuthUI(false);
+      complexForm.reset();
+      currentTableData = [...mockUsers];
+      renderTable(currentTableData);
+      delayedSecretCard.classList.add('hidden');
+      delayedPlaceholder.classList.remove('hidden');
+      progressBarFill.style.width = '0%';
+      progressPercentDisplay.textContent = '0%';
+      progressCompletedAlert.classList.add('hidden');
+      rightClickMsg.classList.add('hidden');
+      doubleClickMsg.classList.add('hidden');
+      fileUploadResult.classList.add('hidden');
+      apiOutput.classList.add('hidden');
+      apiPlaceholder.classList.remove('hidden');
+      showToast('Sandbox reset to factory default state.', 'info');
+    });
+  </script>
+</body>
+</html>
